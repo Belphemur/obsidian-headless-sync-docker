@@ -5,6 +5,8 @@ services:
       # Required
       OBSIDIAN_AUTH_TOKEN: ${OBSIDIAN_AUTH_TOKEN}
       VAULT_NAME: ${VAULT_NAME}
+      # Required if vault uses end-to-end encryption
+      VAULT_PASSWORD: ${VAULT_PASSWORD:-}
       # Optional overrides
       VAULT_PATH: ${VAULT_PATH:-/vault}
       DEVICE_NAME: ${DEVICE_NAME:-obsidian-docker}

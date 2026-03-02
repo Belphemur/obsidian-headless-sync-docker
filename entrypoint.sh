@@ -35,7 +35,18 @@ cd "$VAULT_PATH"
 # First-time vault setup: link local directory to remote vault
 if [ -n "$VAULT_NAME" ]; then
   echo "[obsidian-headless] Configuring sync for vault: '$VAULT_NAME' → $VAULT_PATH"
-  ob sync-setup --vault "$VAULT_NAME" || true
+  SETUP_CMD="ob sync-setup --vault \"$VAULT_NAME\""
+  if [ -n "$VAULT_PASSWORD" ]; then
+    SETUP_CMD="$SETUP_CMD --password \"$VAULT_PASSWORD\""
+  fi
+  if ! eval "$SETUP_CMD"; then
+    echo "[obsidian-headless] ERROR: ob sync-setup failed." >&2
+    echo "[obsidian-headless] Check OBSIDIAN_AUTH_TOKEN and VAULT_NAME are correct." >&2
+    if [ -z "$VAULT_PASSWORD" ]; then
+      echo "[obsidian-headless] If your vault uses end-to-end encryption, set VAULT_PASSWORD." >&2
+    fi
+    exit 1
+  fi
 fi
 
 # Apply optional sync config

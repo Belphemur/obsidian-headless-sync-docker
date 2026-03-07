@@ -15,7 +15,11 @@ The container authenticates with a single environment variable token and runs `o
 Pull the image and run the interactive login helper. It will prompt for your Obsidian email, password, and MFA code (if enabled), then print your token to the terminal.
 
 ```bash
+# Docker
 docker run --rm -it ghcr.io/crosbyh/obsidian-headless-sync-docker:latest get-token
+
+# Podman
+podman run --rm -it ghcr.io/crosbyh/obsidian-headless-sync-docker:latest get-token
 ```
 
 Copy the printed `OBSIDIAN_AUTH_TOKEN` value — you'll need it in step 3.
@@ -29,7 +33,14 @@ Copy the printed `OBSIDIAN_AUTH_TOKEN` value — you'll need it in step 3.
 List the vaults available on your Obsidian Sync account:
 
 ```bash
+# Docker
 docker run --rm \
+  -e OBSIDIAN_AUTH_TOKEN=your-token-here \
+  ghcr.io/crosbyh/obsidian-headless-sync-docker:latest \
+  ob sync-list-remote
+
+# Podman
+podman run --rm \
   -e OBSIDIAN_AUTH_TOKEN=your-token-here \
   ghcr.io/crosbyh/obsidian-headless-sync-docker:latest \
   ob sync-list-remote
@@ -156,6 +167,79 @@ docker build -t obsidian-headless-sync-docker .
 ```
 
 Then update `docker-compose.yml` to use `image: obsidian-headless-sync-docker`.
+
+---
+
+## Podman Quadlet (systemd)
+
+A ready-made quadlet unit file (`obsidian-sync.container`) is included for running the container as a systemd service under rootless Podman.
+
+### Install
+
+```bash
+# Copy the quadlet into the user systemd search path
+mkdir -p ~/.config/containers/systemd
+cp obsidian-sync.container ~/.config/containers/systemd/
+
+# Create a secrets file (mode 600 keeps your token private)
+mkdir -p ~/.config/obsidian-sync
+install -m 600 /dev/null ~/.config/obsidian-sync/obsidian-sync.env
+```
+
+Populate `~/.config/obsidian-sync/obsidian-sync.env` with at minimum:
+
+```env
+OBSIDIAN_AUTH_TOKEN=<token from get-token>
+VAULT_NAME=My Vault
+```
+
+Optional keys (defaults are set in the unit file):
+
+```env
+VAULT_PASSWORD=
+PUID=0
+PGID=0
+DEVICE_NAME=obsidian-podman
+CONFLICT_STRATEGY=merge
+EXCLUDED_FOLDERS=
+FILE_TYPES=
+```
+
+### Start
+
+```bash
+systemctl --user daemon-reload
+systemctl --user start obsidian-sync
+systemctl --user status obsidian-sync
+```
+
+Watch logs:
+
+```bash
+journalctl --user -u obsidian-sync -f
+```
+
+### Automatic image updates
+
+Enable the built-in Podman auto-update timer to pull new images from ghcr on a schedule:
+
+```bash
+systemctl --user enable --now podman-auto-update.timer
+```
+
+The unit also sets `Pull=newer`, so it will fetch a newer image from ghcr.io each time the service restarts.
+
+### File ownership
+
+The unit defaults to `PUID=0` / `PGID=0`, which is correct for rootless Podman — container root maps to your host user. For system-wide (root) Podman, override these in the env file with the UID/GID of the vault owner.
+
+### Vault location
+
+By default the vault is stored at `~/obsidian-vault`. To use a different path, edit the `Volume=` line in the unit file before copying it:
+
+```ini
+Volume=/path/to/your/vault:/vault:z
+```
 
 ---
 

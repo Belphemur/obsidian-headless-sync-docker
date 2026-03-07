@@ -1,0 +1,55 @@
+# Podman Quadlet for obsidian-headless-sync-docker
+#
+# Before starting, create the environment file with your credentials:
+#   mkdir -p ~/.config/obsidian-sync
+#   install -m 600 /dev/null ~/.config/obsidian-sync/obsidian-sync.env
+#   # Then populate it — see Environment Variables section below.
+
+[Unit]
+Description=Obsidian Headless Sync
+Documentation=https://github.com/crosbyh/obsidian-headless-sync-docker
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/crosbyh/obsidian-headless-sync-docker:latest
+ContainerName=obsidian-sync
+Pull=newer
+AutoUpdate=registry
+
+# Secrets and required configuration.
+# File must exist before the service starts.
+# Required keys: OBSIDIAN_AUTH_TOKEN, VAULT_NAME
+#
+# Example ~/.config/obsidian-sync/obsidian-sync.env:
+#   OBSIDIAN_AUTH_TOKEN=<token from get-token>
+#   VAULT_NAME=My Vault
+#   VAULT_PASSWORD=
+#   PUID=0
+#   PGID=0
+#   DEVICE_NAME=obsidian-podman
+#   CONFLICT_STRATEGY=merge
+#   EXCLUDED_FOLDERS=
+#   FILE_TYPES=
+#
+# %E expands to ~/.config for user services, /etc/xdg for system services.
+EnvironmentFile=%E/obsidian-sync/obsidian-sync.env
+
+Environment=PUID=0
+Environment=PGID=0
+Environment=VAULT_PATH=/vault
+Environment=DEVICE_NAME=obsidian-podman
+Environment=CONFLICT_STRATEGY=merge
+Environment=EXCLUDED_FOLDERS=
+Environment=FILE_TYPES=
+
+# Vault volume — %h expands to the home directory of the service user.
+# Change the host path to wherever you want vault files stored.
+Volume=%h/obsidian-vault:/vault:z
+
+[Service]
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

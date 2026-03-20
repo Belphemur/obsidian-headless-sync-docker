@@ -1,0 +1,51 @@
+name: Check obsidian-headless Version
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest obsidian-headless npm version
+        id: npm
+        run: |
+          set -euo pipefail
+          VERSION=$(npm view obsidian-headless version)
+          if [[ -z "${VERSION}" ]]; then
+            echo "::error::Could not determine obsidian-headless npm version"
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Get latest repo tag
+        id: tag
+        run: |
+          LATEST=$(git tag --sort=-version:refname | head -n1)
+          # Default to 0.0.0 when no tags exist yet
+          LATEST=${LATEST:-v0.0.0}
+          # Strip leading 'v' for comparison
+          LATEST_VER=${LATEST#v}
+          echo "tag=${LATEST}" >> "$GITHUB_OUTPUT"
+          echo "version=${LATEST_VER}" >> "$GITHUB_OUTPUT"
+
+      - name: Create new tag if version changed
+        if: steps.npm.outputs.version != steps.tag.outputs.version
+        run: |
+          NEW_TAG="v${{ steps.npm.outputs.version }}"
+          echo "New npm version ${{ steps.npm.outputs.version }} differs from latest tag ${{ steps.tag.outputs.tag }} — creating tag ${NEW_TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${NEW_TAG}"
+          git push origin "${NEW_TAG}"

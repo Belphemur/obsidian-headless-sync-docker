@@ -58,9 +58,9 @@ jobs:
             type=semver,pattern={{version}},enable=${{ !inputs.version }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ !inputs.version }}
             type=sha,prefix=sha-,enable=${{ github.event_name != 'pull_request' && !inputs.version }}
-            type=raw,value=latest,enable=${{ inputs.version }}
-            type=raw,value=${{ inputs.version }},enable=${{ inputs.version }}
-            type=raw,value=${{ steps.ver.outputs.major_minor }},enable=${{ inputs.version }}
+            type=raw,value=latest,enable=${{ inputs.version != '' }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=${{ steps.ver.outputs.major_minor }},enable=${{ inputs.version != '' }}
 
       - name: Build and push Docker image
         id: build

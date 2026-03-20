@@ -48,6 +48,8 @@ podman run --rm \
   sync-list-remote
 ```
 
+> **⚠️ Note:** Using `--entrypoint ob` bypasses s6-overlay and runs the command as root. This is fine for read-only operations like `sync-list-remote`, but avoid mounting config volumes with this method as it may create root-owned files that conflict with the unprivileged service.
+
 Note the exact vault name — you'll use it in `VAULT_NAME`.
 
 ---

@@ -10,7 +10,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -25,6 +24,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      - name: Normalize image name to lowercase
+        run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Parse major.minor from version input
         if: inputs.version

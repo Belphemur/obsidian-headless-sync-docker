@@ -193,7 +193,7 @@ docker run --rm -e OBSIDIAN_AUTH_TOKEN=... --entrypoint ob <image> sync-list-rem
 docker run --rm -e OBSIDIAN_AUTH_TOKEN=... --entrypoint ob <image> <subcommand>
 ```
 
-This bypasses s6-overlay entirely, running the command directly without the init system or service chain.
+> **⚠️ Important:** Using `--entrypoint ob` bypasses s6-overlay entirely — no init system, no service chain, no PUID/PGID remapping. The `ob` command runs as **root**. This is fine for read-only operations like `sync-list-remote`, but **avoid mounting config or vault volumes** with this method as it may create root-owned files that become inaccessible to the unprivileged service on the next normal start.
 
 ## References
 

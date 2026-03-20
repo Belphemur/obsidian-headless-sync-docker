@@ -4,6 +4,10 @@
 set -e
 
 VAULT_PATH="${VAULT_PATH:-/vault}"
+if [ ! -d "$VAULT_PATH" ]; then
+  echo "[obsidian-sync] ERROR: VAULT_PATH='$VAULT_PATH' does not exist. Ensure the volume is mounted." >&2
+  exit 1
+fi
 if ! cd "$VAULT_PATH"; then
   echo "[obsidian-sync] ERROR: Failed to change directory to VAULT_PATH='$VAULT_PATH'." >&2
   exit 1

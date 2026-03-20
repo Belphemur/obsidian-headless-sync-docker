@@ -34,6 +34,8 @@ AutoUpdate=registry
 EnvironmentFile=%E/obsidian-sync/obsidian-sync.env
 
 Environment=VAULT_PATH=/vault
+# Rootless Podman: container UID 0 maps to the host user, so PUID=0/PGID=0
+# is the correct default. Override in obsidian-sync.env for system-wide Podman.
 Environment=PUID=0
 Environment=PGID=0
 Environment=DEVICE_NAME=obsidian-podman

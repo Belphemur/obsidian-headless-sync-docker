@@ -6,6 +6,8 @@
 
 set -e
 
+# HOME is set by the Dockerfile ENV; this fallback ensures the script works
+# when run outside the container (e.g. during development).
 export HOME="${HOME:-/home/obsidian}"
 
 echo ""

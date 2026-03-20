@@ -17,7 +17,7 @@ if [ "$PUID" != "$CURRENT_UID" ]; then
   usermod -o -u "$PUID" obsidian
 fi
 
-# Ensure home and config dirs are accessible after UID/GID change
-chown "$PUID:$PGID" /home/obsidian /home/obsidian/.config
+# Ensure home, config, and vault dirs are accessible after UID/GID change
+chown "$PUID:$PGID" /home/obsidian /home/obsidian/.config /vault
 
 echo "[obsidian-sync] Running as UID=${PUID} GID=${PGID}"

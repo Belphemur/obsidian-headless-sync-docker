@@ -18,7 +18,7 @@ The previous architecture used a monolithic `entrypoint.sh` script that handled 
 | Process supervision | None (container exits on crash) | s6 restarts the sync daemon automatically |
 | Signal handling | Shell `exec` (fragile) | Proper PID 1 init with signal forwarding |
 | Startup ordering | Sequential in one script | Dependency-based s6-rc service chain |
-| Privilege model | Runtime `chown` + `su-exec` | Rootless image, no runtime privilege ops |
+| Privilege model | Runtime `chown` + `su-exec` | Root init for UID/GID + `chown`, then unprivileged runtime |
 | Modularity | Single script | Separate service definitions |
 
 ## Privilege Model

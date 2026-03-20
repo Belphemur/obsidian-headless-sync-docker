@@ -1,9 +1,13 @@
 #!/command/with-contenv sh
 # Set up the vault and apply optional sync configuration.
 # All ob commands run as the obsidian user via s6-setuidgid.
+set -e
 
 VAULT_PATH="${VAULT_PATH:-/vault}"
-cd "$VAULT_PATH"
+if ! cd "$VAULT_PATH"; then
+  echo "[obsidian-sync] ERROR: Failed to change directory to VAULT_PATH='$VAULT_PATH'." >&2
+  exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # First-time vault setup

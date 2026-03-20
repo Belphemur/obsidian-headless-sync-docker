@@ -2,7 +2,7 @@
 
 A minimal, rootless Docker image for continuously syncing an [Obsidian](https://obsidian.md) vault via [obsidian-headless](https://github.com/obsidianmd/obsidian-headless) — the official headless client for Obsidian Sync released February 2026.
 
-Built on [s6-overlay](https://github.com/just-containers/s6-overlay) for proper process supervision, signal handling, and ordered service startup. The container runs entirely as a non-root user — no `chown` or privilege escalation at runtime.
+Built on [s6-overlay](https://github.com/just-containers/s6-overlay) for proper process supervision, signal handling, and ordered service startup. The container starts as root to perform one-time user/group and ownership setup, then runs the main services as a non-root user.
 
 **Requirements:** An active [Obsidian Sync](https://obsidian.md/sync) subscription.
 

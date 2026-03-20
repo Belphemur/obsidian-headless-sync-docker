@@ -1,9 +1,13 @@
 #!/command/with-contenv sh
 # Long-running sync service supervised by s6.
 # Drops privileges to the obsidian user before exec-ing the sync process.
+set -e
 
 VAULT_PATH="${VAULT_PATH:-/vault}"
-cd "$VAULT_PATH"
+if ! cd "$VAULT_PATH"; then
+  echo "[obsidian-sync] ERROR: Failed to change directory to VAULT_PATH='$VAULT_PATH'." >&2
+  exit 1
+fi
 
 echo "[obsidian-sync] Starting continuous sync..."
 exec s6-setuidgid obsidian ob sync --continuous

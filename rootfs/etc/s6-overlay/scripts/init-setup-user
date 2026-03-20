@@ -1,5 +1,6 @@
 #!/command/with-contenv sh
 # Adjust the obsidian user/group UID/GID to match PUID/PGID env vars.
+set -e
 
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
@@ -17,7 +18,8 @@ if [ "$PUID" != "$CURRENT_UID" ]; then
   usermod -o -u "$PUID" obsidian
 fi
 
-# Ensure home, config, and vault dirs are accessible after UID/GID change
-chown "$PUID:$PGID" /home/obsidian /home/obsidian/.config /vault
+# Ensure home, config, and vault dirs are accessible after UID/GID change.
+# Recursive chown so persisted volume contents remain accessible.
+chown -R "$PUID:$PGID" /home/obsidian /home/obsidian/.config /vault
 
 echo "[obsidian-sync] Running as UID=${PUID} GID=${PGID}"

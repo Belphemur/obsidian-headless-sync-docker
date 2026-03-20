@@ -70,6 +70,8 @@ docker buildx build --platform linux/amd64,linux/arm64 -t obsidian-headless-sync
 
 There are no automated tests. Validation is done by building the image and running it with valid Obsidian credentials.
 
+> **⚠️ Required before committing:** Always run `docker build -t obsidian-headless-sync-docker .` and verify the build succeeds before committing any changes to the Dockerfile, s6-overlay scripts, or any file copied into the image (`rootfs/`, `get-token.sh`). Do not commit if the build fails.
+
 ## CI/CD
 
 - **`.github/workflows/ci.yml`** — Runs on every push to `main` and every PR. Builds the Docker image for both `linux/amd64` and `linux/arm64`, then runs a [Trivy](https://github.com/aquasecurity/trivy) vulnerability scan. SARIF results are uploaded to the GitHub Security tab automatically.

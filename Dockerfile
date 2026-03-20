@@ -33,8 +33,11 @@ RUN apk add --no-cache shadow
 
 # ---------------------------------------------------------------------------
 # Create default non-root user (UID/GID adjustable at runtime via PUID/PGID)
+# node:lts-alpine ships a 'node' user/group at UID/GID 1000 — remove it first
 # ---------------------------------------------------------------------------
-RUN addgroup -g 1000 obsidian \
+RUN deluser --remove-home node \
+    && delgroup node || true \
+    && addgroup -g 1000 obsidian \
     && adduser -u 1000 -G obsidian -h /home/obsidian -s /bin/sh -D obsidian \
     && mkdir -p /vault /home/obsidian/.config
 

@@ -123,6 +123,8 @@ Supported platforms: `linux/amd64`, `linux/arm64`.
 | `CONFLICT_STRATEGY` | No | `merge` | `merge` or `conflict` |
 | `EXCLUDED_FOLDERS` | No | — | Comma-separated vault folders to skip |
 | `FILE_TYPES` | No | — | Extra types to sync: `image,audio,video,pdf,unsupported` |
+| `SYNC_MODE` | No | `bidirectional` | Sync mode: `bidirectional`, `pull-only`, or `mirror-remote` |
+| `SYNC_CONFIGS` | No | — | Comma-separated config categories to sync (see below) |
 | `GHCR_REPO` | No | — | Override image repository when self-building |
 
 ---
@@ -168,6 +170,48 @@ VAULT_PASSWORD=your-vault-encryption-password
 ```
 
 > **Note:** `VAULT_PASSWORD` is the *vault encryption password* you chose in Obsidian, not your Obsidian account password. They are separate credentials.
+
+---
+
+## Sync Configuration (SYNC_MODE / SYNC_CONFIGS)
+
+These variables map directly to [`ob sync-config`](https://obsidian.md/help/sync/headless#%60ob+sync-config%60) options and are applied every time the container starts.
+
+### SYNC_MODE
+
+Controls how local and remote changes are reconciled.
+
+| Value | Behaviour |
+|---|---|
+| `bidirectional` | Upload local changes **and** download remote changes (default) |
+| `pull-only` | Download remote changes only — local changes are ignored |
+| `mirror-remote` | Download remote changes only — local changes are reverted |
+
+```env
+SYNC_MODE=pull-only
+```
+
+### SYNC_CONFIGS
+
+Comma-separated list of Obsidian config categories to sync alongside vault notes. Leave blank to keep the vault's existing setting (all categories synced by default).
+
+| Value | Syncs |
+|---|---|
+| `app` | Core app settings |
+| `appearance` | Theme and appearance settings |
+| `appearance-data` | Theme assets (CSS snippets, etc.) |
+| `hotkey` | Keyboard shortcuts |
+| `core-plugin` | Core plugin toggle states |
+| `core-plugin-data` | Core plugin configuration data |
+| `community-plugin` | Community plugin list and toggle states |
+| `community-plugin-data` | Community plugin configuration data |
+
+```env
+# Sync only app settings and hotkeys
+SYNC_CONFIGS=app,hotkey
+```
+
+For the full reference see the [obsidian-headless `ob sync-config` documentation](https://obsidian.md/help/sync/headless#%60ob+sync-config%60).
 
 ---
 
@@ -223,6 +267,8 @@ DEVICE_NAME=obsidian-podman
 CONFLICT_STRATEGY=merge
 EXCLUDED_FOLDERS=
 FILE_TYPES=
+SYNC_MODE=
+SYNC_CONFIGS=
 ```
 
 ### Start

@@ -7,12 +7,12 @@
 
 [Unit]
 Description=Obsidian Headless Sync
-Documentation=https://github.com/crosbyh/obsidian-headless-sync-docker
+Documentation=https://github.com/Belphemur/obsidian-headless-sync-docker
 After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/crosbyh/obsidian-headless-sync-docker:latest
+Image=ghcr.io/belphemur/obsidian-headless-sync-docker:latest
 ContainerName=obsidian-sync
 Pull=newer
 AutoUpdate=registry
@@ -25,8 +25,6 @@ AutoUpdate=registry
 #   OBSIDIAN_AUTH_TOKEN=<token from get-token>
 #   VAULT_NAME=My Vault
 #   VAULT_PASSWORD=
-#   PUID=0
-#   PGID=0
 #   DEVICE_NAME=obsidian-podman
 #   CONFLICT_STRATEGY=merge
 #   EXCLUDED_FOLDERS=
@@ -35,8 +33,6 @@ AutoUpdate=registry
 # %E expands to ~/.config for user services, /etc/xdg for system services.
 EnvironmentFile=%E/obsidian-sync/obsidian-sync.env
 
-Environment=PUID=0
-Environment=PGID=0
 Environment=VAULT_PATH=/vault
 Environment=DEVICE_NAME=obsidian-podman
 Environment=CONFLICT_STRATEGY=merge
@@ -46,6 +42,9 @@ Environment=FILE_TYPES=
 # Vault volume — %h expands to the home directory of the service user.
 # Change the host path to wherever you want vault files stored.
 Volume=%h/obsidian-vault:/vault:z
+
+# Persistent config (login state, etc.)
+Volume=%h/.config/obsidian-sync-config:/home/obsidian/.config:z
 
 [Service]
 Restart=always

@@ -1,0 +1,7 @@
+#!/command/with-contenv sh
+# Authenticate with Obsidian using the provided auth token.
+
+echo "[obsidian-sync] Logging in to Obsidian..."
+ob login
+
+echo "[obsidian-sync] Login successful."

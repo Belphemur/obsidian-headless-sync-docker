@@ -1,8 +1,12 @@
 #!/bin/sh
 # Interactive helper: logs in to Obsidian and prints the resulting auth token.
-# Usage: docker run --rm -it <image> get-token
+#
+# Usage (override entrypoint so s6-overlay services are not started):
+#   docker run --rm -it --entrypoint get-token <image>
 
 set -e
+
+export HOME="${HOME:-/home/obsidian}"
 
 echo ""
 echo "=== obsidian-headless: Get Auth Token ==="

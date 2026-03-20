@@ -49,6 +49,7 @@ jobs:
           if [[ "${NPM_VER}" == "${TAG_VER}" ]]; then
             echo "Already up to date (${NPM_VER}). No build needed."
             echo "new_version=" >> "$GITHUB_OUTPUT"
+            BUILD_STATUS="✅ Already up to date — no build triggered"
           else
             echo "New version detected: ${NPM_VER} (was ${TAG_VER}) — creating tag v${NPM_VER}"
             git config user.name "github-actions[bot]"
@@ -56,7 +57,17 @@ jobs:
             git tag "v${NPM_VER}"
             git push origin "v${NPM_VER}"
             echo "new_version=${NPM_VER}" >> "$GITHUB_OUTPUT"
+            BUILD_STATUS="🚀 New version detected — building \`v${NPM_VER}\`"
           fi
+          {
+            echo "## 🔍 obsidian-headless Version Check"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **npm version** | \`${NPM_VER}\` |"
+            echo "| **Repo tag** | \`${TAG_VER}\` |"
+            echo "| **Status** | ${BUILD_STATUS} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   build:
     needs: check-version

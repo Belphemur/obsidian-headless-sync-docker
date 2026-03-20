@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Parse major.minor from version input
-        if: inputs.version != ''
+        if: inputs.version
         id: ver
         run: |
           MM=$(echo "${{ inputs.version }}" | cut -d. -f1-2)
@@ -59,13 +59,13 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=pr
-            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' && inputs.version == '' }}
-            type=semver,pattern={{version}},enable=${{ inputs.version == '' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.version == '' }}
-            type=sha,prefix=sha-,enable=${{ github.event_name != 'pull_request' && inputs.version == '' }}
-            type=raw,value=latest,enable=${{ inputs.version != '' }}
-            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
-            type=raw,value=${{ steps.ver.outputs.major_minor }},enable=${{ inputs.version != '' }}
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' && !inputs.version }}
+            type=semver,pattern={{version}},enable=${{ !inputs.version }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !inputs.version }}
+            type=sha,prefix=sha-,enable=${{ github.event_name != 'pull_request' && !inputs.version }}
+            type=raw,value=latest,enable=${{ inputs.version }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version }}
+            type=raw,value=${{ steps.ver.outputs.major_minor }},enable=${{ inputs.version }}
 
       - name: Build and push Docker image
         id: build
@@ -85,3 +85,27 @@ jobs:
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build.outputs.digest }}
+
+      - name: Write job summary
+        run: |
+          {
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              echo "## 🐳 Docker Image Built (PR — not pushed)"
+            else
+              echo "## 🐳 Docker Image Published"
+            fi
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Image** | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\` |"
+            echo "| **Platforms** | \`linux/amd64\`, \`linux/arm64\` |"
+            if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+              echo "| **Digest** | \`${{ steps.build.outputs.digest }}\` |"
+              echo "| **Attestation** | ✅ SLSA provenance attached |"
+            fi
+            echo ""
+            echo "### 🏷️ Tags"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

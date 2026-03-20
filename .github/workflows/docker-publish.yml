@@ -6,6 +6,12 @@ on:
     tags: ['v*.*.*']
   pull_request:
     branches: [main, master]
+  workflow_call:
+    inputs:
+      version:
+        description: 'obsidian-headless version to build (without v prefix, e.g. 1.2.3)'
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -24,6 +30,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Parse major.minor from version input
+        if: inputs.version != ''
+        id: ver
+        run: |
+          MM=$(echo "${{ inputs.version }}" | cut -d. -f1-2)
+          echo "major_minor=${MM}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU (multi-platform support)
         uses: docker/setup-qemu-action@v3
@@ -46,10 +59,13 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=pr
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' && inputs.version == '' }}
+            type=semver,pattern={{version}},enable=${{ inputs.version == '' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.version == '' }}
+            type=sha,prefix=sha-,enable=${{ github.event_name != 'pull_request' && inputs.version == '' }}
+            type=raw,value=latest,enable=${{ inputs.version != '' }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=${{ steps.ver.outputs.major_minor }},enable=${{ inputs.version != '' }}
 
       - name: Build and push Docker image
         id: build

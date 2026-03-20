@@ -12,6 +12,9 @@ jobs:
     permissions:
       contents: write
 
+    outputs:
+      new_version: ${{ steps.compare.outputs.new_version }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,16 +39,34 @@ jobs:
           # Default to 0.0.0 when no tags exist yet
           LATEST=${LATEST:-v0.0.0}
           # Strip leading 'v' for comparison
-          LATEST_VER=${LATEST#v}
-          echo "tag=${LATEST}" >> "$GITHUB_OUTPUT"
-          echo "version=${LATEST_VER}" >> "$GITHUB_OUTPUT"
+          echo "version=${LATEST#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Create new tag if version changed
-        if: steps.npm.outputs.version != steps.tag.outputs.version
+      - name: Compare versions and push tag if changed
+        id: compare
         run: |
-          NEW_TAG="v${{ steps.npm.outputs.version }}"
-          echo "New npm version ${{ steps.npm.outputs.version }} differs from latest tag ${{ steps.tag.outputs.tag }} — creating tag ${NEW_TAG}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${NEW_TAG}"
-          git push origin "${NEW_TAG}"
+          NPM_VER="${{ steps.npm.outputs.version }}"
+          TAG_VER="${{ steps.tag.outputs.version }}"
+          if [[ "${NPM_VER}" == "${TAG_VER}" ]]; then
+            echo "Already up to date (${NPM_VER}). No build needed."
+            echo "new_version=" >> "$GITHUB_OUTPUT"
+          else
+            echo "New version detected: ${NPM_VER} (was ${TAG_VER}) — creating tag v${NPM_VER}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "v${NPM_VER}"
+            git push origin "v${NPM_VER}"
+            echo "new_version=${NPM_VER}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: check-version
+    if: needs.check-version.outputs.new_version != ''
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      version: ${{ needs.check-version.outputs.new_version }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write

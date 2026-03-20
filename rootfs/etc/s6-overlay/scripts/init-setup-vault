@@ -49,3 +49,11 @@ fi
 if [ -n "$FILE_TYPES" ]; then
   s6-setuidgid obsidian ob sync-config --file-types "$FILE_TYPES" 2>/dev/null || true
 fi
+
+if [ -n "$SYNC_MODE" ]; then
+  s6-setuidgid obsidian ob sync-config --mode "$SYNC_MODE" 2>/dev/null || true
+fi
+
+if [ -n "$SYNC_CONFIGS" ]; then
+  s6-setuidgid obsidian ob sync-config --configs "$SYNC_CONFIGS" 2>/dev/null || true
+fi

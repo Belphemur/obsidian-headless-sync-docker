@@ -1,8 +1,9 @@
 #!/command/with-contenv sh
 # Long-running sync service supervised by s6.
+# Drops privileges to the obsidian user before exec-ing the sync process.
 
 VAULT_PATH="${VAULT_PATH:-/vault}"
 cd "$VAULT_PATH"
 
 echo "[obsidian-sync] Starting continuous sync..."
-exec ob sync --continuous
+exec s6-setuidgid obsidian ob sync --continuous

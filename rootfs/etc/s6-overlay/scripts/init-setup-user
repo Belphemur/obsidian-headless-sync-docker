@@ -1,0 +1,23 @@
+#!/command/with-contenv sh
+# Adjust the obsidian user/group UID/GID to match PUID/PGID env vars.
+
+PUID="${PUID:-1000}"
+PGID="${PGID:-1000}"
+
+CURRENT_UID=$(id -u obsidian)
+CURRENT_GID=$(id -g obsidian)
+
+if [ "$PGID" != "$CURRENT_GID" ]; then
+  echo "[obsidian-sync] Adjusting obsidian group GID: ${CURRENT_GID} → ${PGID}"
+  groupmod -o -g "$PGID" obsidian
+fi
+
+if [ "$PUID" != "$CURRENT_UID" ]; then
+  echo "[obsidian-sync] Adjusting obsidian user UID: ${CURRENT_UID} → ${PUID}"
+  usermod -o -u "$PUID" obsidian
+fi
+
+# Ensure home and config dirs are accessible after UID/GID change
+chown "$PUID:$PGID" /home/obsidian /home/obsidian/.config
+
+echo "[obsidian-sync] Running as UID=${PUID} GID=${PGID}"

@@ -21,26 +21,25 @@ The previous architecture used a monolithic `entrypoint.sh` script that handled 
 | Privilege model | Runtime `chown` + `su-exec` | Rootless image, no runtime privilege ops |
 | Modularity | Single script | Separate service definitions |
 
-## Rootless Design
+## Privilege Model
 
-The image runs entirely as the `obsidian` user (UID 1000). There is no runtime `chown`, no `PUID`/`PGID` environment variables, and no privilege dropping.
+The container starts as root to allow UID/GID adjustment via `PUID`/`PGID`, then drops privileges for all Obsidian commands.
 
 ### Build-Time Setup
 
 During the Docker build:
 
-1. s6-overlay is extracted to `/` (as root, standard for s6-overlay installation)
-2. The `obsidian` user and group are created (UID/GID 1000)
-3. `/vault` and `/home/obsidian/.config` directories are created with correct ownership
-4. `/run` is made writable by the `obsidian` user (s6-overlay needs this for runtime state)
-5. `USER obsidian` is set — all runtime operations execute as this user
+1. s6-overlay is extracted to `/` (requires root for system paths)
+2. The `obsidian` user and group are created with default UID/GID 1000
+3. `/vault` and `/home/obsidian/.config` directories are created
+4. The `shadow` package is installed for `usermod`/`groupmod`
 
-### Runtime
+### Runtime Startup
 
-- s6-overlay's `/init` runs as UID 1000
-- All s6-rc services (oneshots and longruns) run as the same user
-- Scripts use `#!/command/with-contenv sh` to access container environment variables
-- No capability escalation, no setuid binaries
+1. s6-overlay `/init` runs as root (PID 1)
+2. **init-setup-user** reads `PUID`/`PGID` (default `1000`/`1000`) and adjusts the `obsidian` user's UID/GID via `usermod`/`groupmod`, then fixes ownership of `/home/obsidian`
+3. All subsequent `ob` commands run as the `obsidian` user via `s6-setuidgid obsidian`
+4. The long-running sync process `exec`s as the `obsidian` user — no root process touches vault data
 
 ### Volume Permissions
 
@@ -63,19 +62,23 @@ The host directories must be writable by UID 1000. With rootless Docker/Podman, 
                     └────────┬─────────┘
                              │
                     ┌────────▼─────────┐
+                    │  init-setup-user │  oneshot: adjust UID/GID to PUID/PGID
+                    └────────┬─────────┘
+                             │
+                    ┌────────▼─────────┐
                     │  init-check-auth │  oneshot: validate OBSIDIAN_AUTH_TOKEN
                     └────────┬─────────┘
                              │
                     ┌────────▼──────────────┐
-                    │  init-obsidian-login  │  oneshot: run ob login
+                    │  init-obsidian-login  │  oneshot: run ob login (as obsidian)
                     └────────┬──────────────┘
                              │
                     ┌────────▼──────────────┐
-                    │   init-setup-vault    │  oneshot: ob sync-setup + config
+                    │   init-setup-vault    │  oneshot: ob sync-setup + config (as obsidian)
                     └────────┬──────────────┘
                              │
                     ┌────────▼──────────────┐
-                    │  svc-obsidian-sync    │  longrun: ob sync --continuous
+                    │  svc-obsidian-sync    │  longrun: ob sync --continuous (as obsidian)
                     └───────────────────────┘
 ```
 
@@ -102,11 +105,16 @@ All services are registered in `user/contents.d/` (empty files named after the s
 ```
 rootfs/etc/s6-overlay/
 ├── s6-rc.d/
+│   ├── init-setup-user/
+│   │   ├── type                    → "oneshot"
+│   │   ├── up                      → "/etc/s6-overlay/scripts/init-setup-user"
+│   │   └── dependencies.d/
+│   │       └── base                → (empty file)
 │   ├── init-check-auth/
 │   │   ├── type                    → "oneshot"
 │   │   ├── up                      → "/etc/s6-overlay/scripts/init-check-auth"
 │   │   └── dependencies.d/
-│   │       └── base                → (empty file)
+│   │       └── init-setup-user     → (empty file)
 │   ├── init-obsidian-login/
 │   │   ├── type                    → "oneshot"
 │   │   ├── up                      → "/etc/s6-overlay/scripts/init-obsidian-login"
@@ -119,19 +127,21 @@ rootfs/etc/s6-overlay/
 │   │       └── init-obsidian-login → (empty file)
 │   ├── svc-obsidian-sync/
 │   │   ├── type                    → "longrun"
-│   │   ├── run                     → executable script (with-contenv + exec ob sync)
+│   │   ├── run                     → executable (with-contenv + s6-setuidgid + exec ob sync)
 │   │   └── dependencies.d/
 │   │       └── init-setup-vault    → (empty file)
 │   └── user/
 │       └── contents.d/
+│           ├── init-setup-user     → (empty file)
 │           ├── init-check-auth     → (empty file)
 │           ├── init-obsidian-login → (empty file)
 │           ├── init-setup-vault    → (empty file)
 │           └── svc-obsidian-sync   → (empty file)
 └── scripts/
+    ├── init-setup-user             → adjusts UID/GID to PUID/PGID
     ├── init-check-auth             → validates OBSIDIAN_AUTH_TOKEN
-    ├── init-obsidian-login         → runs ob login
-    └── init-setup-vault            → runs ob sync-setup + optional config
+    ├── init-obsidian-login         → runs ob login (as obsidian)
+    └── init-setup-vault            → runs ob sync-setup + config (as obsidian)
 ```
 
 ## Multi-Architecture Support

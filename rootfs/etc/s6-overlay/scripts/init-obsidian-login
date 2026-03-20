@@ -2,6 +2,6 @@
 # Authenticate with Obsidian using the provided auth token.
 
 echo "[obsidian-sync] Logging in to Obsidian..."
-ob login
+s6-setuidgid obsidian ob login
 
 echo "[obsidian-sync] Login successful."

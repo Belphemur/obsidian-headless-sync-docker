@@ -34,6 +34,8 @@ AutoUpdate=registry
 EnvironmentFile=%E/obsidian-sync/obsidian-sync.env
 
 Environment=VAULT_PATH=/vault
+Environment=PUID=0
+Environment=PGID=0
 Environment=DEVICE_NAME=obsidian-podman
 Environment=CONFLICT_STRATEGY=merge
 Environment=EXCLUDED_FOLDERS=

@@ -8,6 +8,9 @@ services:
       VAULT_NAME: ${VAULT_NAME}
       # Required if vault uses end-to-end encryption
       VAULT_PASSWORD: ${VAULT_PASSWORD:-}
+      # File ownership: UID:GID of the host user who should own vault files.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
       # Optional overrides
       VAULT_PATH: ${VAULT_PATH:-/vault}
       DEVICE_NAME: ${DEVICE_NAME:-obsidian-docker}

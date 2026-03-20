@@ -1,5 +1,6 @@
 #!/command/with-contenv sh
 # Set up the vault and apply optional sync configuration.
+# All ob commands run as the obsidian user via s6-setuidgid.
 
 VAULT_PATH="${VAULT_PATH:-/vault}"
 cd "$VAULT_PATH"
@@ -13,7 +14,7 @@ if [ -n "$VAULT_NAME" ]; then
   if [ -n "$VAULT_PASSWORD" ]; then
     SETUP_CMD="$SETUP_CMD --password \"$VAULT_PASSWORD\""
   fi
-  if ! sh -c "$SETUP_CMD"; then
+  if ! s6-setuidgid obsidian sh -c "$SETUP_CMD"; then
     echo "[obsidian-sync] ERROR: ob sync-setup failed." >&2
     echo "[obsidian-sync] Check OBSIDIAN_AUTH_TOKEN and VAULT_NAME are correct." >&2
     if [ -z "$VAULT_PASSWORD" ]; then
@@ -27,17 +28,17 @@ fi
 # Apply optional sync config
 # ---------------------------------------------------------------------------
 if [ -n "$DEVICE_NAME" ]; then
-  ob sync-config --device-name "$DEVICE_NAME" 2>/dev/null || true
+  s6-setuidgid obsidian ob sync-config --device-name "$DEVICE_NAME" 2>/dev/null || true
 fi
 
 if [ -n "$CONFLICT_STRATEGY" ]; then
-  ob sync-config --conflict-strategy "$CONFLICT_STRATEGY" 2>/dev/null || true
+  s6-setuidgid obsidian ob sync-config --conflict-strategy "$CONFLICT_STRATEGY" 2>/dev/null || true
 fi
 
 if [ -n "$EXCLUDED_FOLDERS" ]; then
-  ob sync-config --excluded-folders "$EXCLUDED_FOLDERS" 2>/dev/null || true
+  s6-setuidgid obsidian ob sync-config --excluded-folders "$EXCLUDED_FOLDERS" 2>/dev/null || true
 fi
 
 if [ -n "$FILE_TYPES" ]; then
-  ob sync-config --file-types "$FILE_TYPES" 2>/dev/null || true
+  s6-setuidgid obsidian ob sync-config --file-types "$FILE_TYPES" 2>/dev/null || true
 fi

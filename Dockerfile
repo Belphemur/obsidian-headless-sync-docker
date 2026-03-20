@@ -27,12 +27,16 @@ RUN apk add --no-cache --virtual .s6-deps xz \
 RUN npm install -g obsidian-headless
 
 # ---------------------------------------------------------------------------
-# Create non-root user and required directories
+# Runtime deps: shadow provides usermod/groupmod for PUID/PGID support
+# ---------------------------------------------------------------------------
+RUN apk add --no-cache shadow
+
+# ---------------------------------------------------------------------------
+# Create default non-root user (UID/GID adjustable at runtime via PUID/PGID)
 # ---------------------------------------------------------------------------
 RUN addgroup -g 1000 obsidian \
     && adduser -u 1000 -G obsidian -h /home/obsidian -s /bin/sh -D obsidian \
-    && mkdir -p /vault /home/obsidian/.config \
-    && chown obsidian:obsidian /vault /run
+    && mkdir -p /vault /home/obsidian/.config
 
 # ---------------------------------------------------------------------------
 # Copy s6-overlay service definitions, init scripts, and helper
@@ -52,5 +56,4 @@ VOLUME ["/vault", "/home/obsidian/.config"]
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 ENV HOME=/home/obsidian
 
-USER obsidian
 ENTRYPOINT ["/init"]

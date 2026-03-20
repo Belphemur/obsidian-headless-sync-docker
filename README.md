@@ -93,10 +93,11 @@ This image uses [s6-overlay v3](https://github.com/just-containers/s6-overlay) a
 
 The startup sequence runs through ordered s6-rc services:
 
-1. **init-check-auth** — validates `OBSIDIAN_AUTH_TOKEN` is set
-2. **init-obsidian-login** — runs `ob login` to authenticate
-3. **init-setup-vault** — runs `ob sync-setup` and applies optional config
-4. **svc-obsidian-sync** — starts `ob sync --continuous` under s6 supervision
+1. **init-setup-user** — adjusts UID/GID to match `PUID`/`PGID`
+2. **init-check-auth** — validates `OBSIDIAN_AUTH_TOKEN` is set
+3. **init-obsidian-login** — runs `ob login` to authenticate
+4. **init-setup-vault** — runs `ob sync-setup` and applies optional config
+5. **svc-obsidian-sync** — starts `ob sync --continuous` under s6 supervision
 
 If any init step fails, the container exits immediately (`S6_BEHAVIOUR_IF_STAGE2_FAILS=2`).
 
@@ -113,12 +114,42 @@ Supported platforms: `linux/amd64`, `linux/arm64`.
 | `VAULT_HOST_PATH` | Yes | `./vault` | Host path where vault files will be written |
 | `CONFIG_HOST_PATH` | No | `./config` | Host path for persistent config (login state, etc.) |
 | `VAULT_PASSWORD` | If E2E enabled | — | Vault end-to-end encryption password (see below) |
+| `PUID` | No | `1000` | UID that will own synced files (see below) |
+| `PGID` | No | `1000` | GID that will own synced files (see below) |
 | `VAULT_PATH` | No | `/vault` | In-container mount path (advanced) |
 | `DEVICE_NAME` | No | `obsidian-docker` | Label shown in Obsidian Sync history |
 | `CONFLICT_STRATEGY` | No | `merge` | `merge` or `conflict` |
 | `EXCLUDED_FOLDERS` | No | — | Comma-separated vault folders to skip |
 | `FILE_TYPES` | No | — | Extra types to sync: `image,audio,video,pdf,unsupported` |
 | `GHCR_REPO` | No | — | Override image repository when self-building |
+
+---
+
+## File Ownership (PUID / PGID)
+
+At startup the container adjusts its internal `obsidian` user to match the `PUID`/`PGID` you provide, then drops privileges via `s6-setuidgid` before running any Obsidian commands. This means vault files on the host are owned by the UID/GID you choose.
+
+**Regular Docker** (daemon runs as root):
+
+```bash
+# Find your UID and GID
+id
+# uid=1000(you) gid=1000(you) ...
+```
+
+```env
+PUID=1000
+PGID=1000
+```
+
+**Rootless Docker / Podman** (daemon runs as your user):
+
+In rootless mode, container UID 0 already maps to your host user. Set both to `0`:
+
+```env
+PUID=0
+PGID=0
+```
 
 ---
 
@@ -264,7 +295,8 @@ Your vault files remain on disk at `VAULT_HOST_PATH`.
 - Re-run the `get-token` step, update `OBSIDIAN_AUTH_TOKEN` in `.env`, and restart: `docker compose up -d`
 
 **Permission denied on vault files**
-- The container runs as UID 1000. Ensure the host directories for vault and config are writable by that user, or run with rootless Docker/Podman where container UID maps to your host user.
+- The container adjusts its internal user to match `PUID`/`PGID` (default `1000:1000`). Set these in `.env` to match the host user who should own the files (`id` shows your values).
+- For rootless Docker/Podman, set both to `0`.
 
 ---
 

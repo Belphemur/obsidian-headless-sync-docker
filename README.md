@@ -172,6 +172,12 @@ VAULT_PASSWORD=your-vault-encryption-password
 
 > **Note:** `VAULT_PASSWORD` is the *vault encryption password* you chose in Obsidian, not your Obsidian account password. They are separate credentials.
 
+> **⚠️ Passwords containing `$`:** Docker Compose interpolates `.env` files, so a bare `$` in the value (e.g. `pa$sword`) is treated as the start of a variable reference and silently stripped, truncating your password. If your password contains a `$`, wrap it in single quotes so Compose treats it literally:
+>
+> ```env
+> VAULT_PASSWORD='pa$sword'
+> ```
+
 ---
 
 ## Sync Configuration (SYNC_MODE / SYNC_CONFIGS)
@@ -344,6 +350,7 @@ Your vault files remain on disk at `VAULT_HOST_PATH`.
 
 **"Failed to validate password" on setup**
 - Your vault has end-to-end encryption enabled. Set `VAULT_PASSWORD` in `.env` to the encryption password from **Obsidian → Settings → Sync**. This is distinct from your Obsidian account password.
+- If the password contains a `$` character, make sure it's wrapped in single quotes in `.env` (e.g. `VAULT_PASSWORD='pa$sword'`), otherwise Compose's variable interpolation will silently truncate it. Run `docker compose config` and check the resolved `VAULT_PASSWORD` value matches what you expect.
 
 **Sync stops after a while**
 - The `restart: unless-stopped` policy in `compose.yml` will restart the container automatically. Within the container, s6 supervises the sync process and restarts it if it exits.

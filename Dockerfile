@@ -39,7 +39,8 @@ RUN deluser --remove-home node || true; \
     delgroup node || true; \
     addgroup -g 1000 obsidian \
     && adduser -u 1000 -G obsidian -h /home/obsidian -s /bin/sh -D obsidian \
-    && mkdir -p /vault /home/obsidian/.config
+    && mkdir -p /vault /home/obsidian/.config \
+    && chown obsidian:obsidian /vault /home/obsidian/.config
 
 # ---------------------------------------------------------------------------
 # Copy s6-overlay service definitions, init scripts, and helper

@@ -1,0 +1,60 @@
+name: Update Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'rootfs/**'
+
+permissions:
+  contents: read
+
+jobs:
+  get-latest-version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get latest repo tag
+        id: tag
+        run: |
+          set -euo pipefail
+          LATEST=$(git tag --sort=-version:refname | head -n1)
+          if [[ -z "${LATEST}" ]]; then
+            echo "::error::No version tags found in repository"
+            exit 1
+          fi
+          # Strip leading 'v' for comparison
+          echo "version=${LATEST#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Write job summary
+        run: |
+          {
+            echo "## 🔄 Update Docker Image"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Latest version tag** | \`${{ steps.tag.outputs.version }}\` |"
+            echo "| **Reason** | Dockerfile/rootfs changes or manual trigger |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    needs: get-latest-version
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      version: ${{ needs.get-latest-version.outputs.version }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write

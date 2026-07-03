@@ -8,6 +8,9 @@ on:
       - 'Dockerfile'
       - 'rootfs/**'
 
+permissions:
+  contents: read
+
 jobs:
   get-latest-version:
     runs-on: ubuntu-latest

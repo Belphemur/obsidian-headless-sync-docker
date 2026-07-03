@@ -17,6 +17,9 @@ services:
       CONFLICT_STRATEGY: ${CONFLICT_STRATEGY:-merge}
       EXCLUDED_FOLDERS: ${EXCLUDED_FOLDERS:-}
       FILE_TYPES: ${FILE_TYPES:-}
+      SYNC_MODE: ${SYNC_MODE:-}
+      SYNC_CONFIGS: ${SYNC_CONFIGS:-}
+      CONFIG_DIR_NAME: ${CONFIG_DIR_NAME:-}
     volumes:
       - ${VAULT_HOST_PATH:-./vault}:/vault
       - ${CONFIG_HOST_PATH:-./config}:/home/obsidian/.config

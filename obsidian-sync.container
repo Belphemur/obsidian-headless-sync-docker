@@ -31,6 +31,7 @@ AutoUpdate=registry
 #   FILE_TYPES=
 #   SYNC_MODE=
 #   SYNC_CONFIGS=
+#   CONFIG_DIR_NAME=
 #
 # %E expands to ~/.config for user services, /etc/xdg for system services.
 EnvironmentFile=%E/obsidian-sync/obsidian-sync.env
@@ -46,6 +47,7 @@ Environment=EXCLUDED_FOLDERS=
 Environment=FILE_TYPES=
 Environment=SYNC_MODE=
 Environment=SYNC_CONFIGS=
+Environment=CONFIG_DIR_NAME=
 
 # Vault volume — %h expands to the home directory of the service user.
 # Change the host path to wherever you want vault files stored.

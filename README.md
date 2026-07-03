@@ -125,6 +125,7 @@ Supported platforms: `linux/amd64`, `linux/arm64`.
 | `FILE_TYPES` | No | — | Extra types to sync: `image,audio,video,pdf,unsupported` |
 | `SYNC_MODE` | No | `bidirectional` | Sync mode: `bidirectional`, `pull-only`, or `mirror-remote` |
 | `SYNC_CONFIGS` | No | — | Comma-separated config categories to sync (see below) |
+| `CONFIG_DIR_NAME` | No | `.obsidian` | Name of the Obsidian config directory inside the vault (advanced) |
 | `GHCR_REPO` | No | — | Override image repository when self-building |
 
 ---
@@ -212,6 +213,14 @@ SYNC_CONFIGS=app,hotkey
 ```
 
 For the full reference see the [obsidian-headless `ob sync-config` documentation](https://obsidian.md/help/sync/headless#%60ob+sync-config%60).
+
+### CONFIG_DIR_NAME
+
+Overrides the name of the Obsidian config directory inside the vault (default: `.obsidian`). Only needed if your vault uses a non-standard config directory name.
+
+```env
+CONFIG_DIR_NAME=.obsidian
+```
 
 ---
 
